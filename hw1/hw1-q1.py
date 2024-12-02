@@ -46,7 +46,15 @@ class Perceptron(LinearModel):
         y_i (scalar): the gold label for that example
         other arguments are ignored
         """
-        raise NotImplementedError # Q1.1 (a)
+        eta = 1
+        # Sign function.
+        y_hat_i = np.argmax(self.W.dot(x_i))  # Predicted label
+        if y_hat_i != y_i:
+            # Perceptron update.
+            self.W[y_i, :] += eta * x_i
+            self.W[y_hat_i, :] -= eta * x_i
+
+        # raise NotImplementedError # Q1.1 (a)
 
 
 class LogisticRegression(LinearModel):
@@ -56,7 +64,24 @@ class LogisticRegression(LinearModel):
         y_i: the gold label for that example
         learning_rate (float): keep it at the default value for your plots
         """
-        raise NotImplementedError # Q1.2 (a,b)
+        # Get probability scores according to the model (num_labels x 1).
+        label_scores = np.expand_dims(self.W.dot(x_i), axis = 1)
+
+        # One-hot encode true label (num_labels x 1).
+        y_i_one_hot = np.zeros((np.size(self.W, 0),1))
+        y_i_one_hot[y_i] = 1
+
+        # Softmax function
+        # This gives the label probabilities according to the model (num_labels x 1).
+        label_probabilities = np.exp(label_scores) / np.sum(np.exp(label_scores))
+        
+        # SGD update. W is num_labels x num_features.
+        if l2_penalty:
+            self.W = (1 - learning_rate * l2_penalty) * self.W + learning_rate * (y_i_one_hot - label_probabilities).dot(np.expand_dims(x_i, axis = 1).T)
+        else:
+            self.W = self.W + learning_rate * (y_i_one_hot - label_probabilities).dot(np.expand_dims(x_i, axis = 1).T)
+
+        # raise NotImplementedError # Q1.2 (a,b)
 
 
 class MLP(object):
@@ -208,13 +233,26 @@ def main():
         model.evaluate(test_X, test_y)
         ))
 
-    # plot
-    plot(epochs, train_accs, valid_accs, filename=f"Q1-{opt.model}-accs.pdf")
+    # # plot
+    # plot(epochs, train_accs, valid_accs, filename=f"Q1-{opt.model}-accs.pdf")
+    # if opt.model == 'mlp':
+    #     plot_loss(epochs, train_loss, filename=f"Q1-{opt.model}-loss.pdf")
+    # elif opt.model == 'logistic_regression':
+    #     plot_w_norm(epochs, weight_norms, filename=f"Q1-{opt.model}-w_norms.pdf")
+    # with open(f"Q1-{opt.model}-results.txt", "w") as f:
+    #     f.write(f"Final test acc: {model.evaluate(test_X, test_y)}\n")
+    #     f.write(f"Training time: {minutes} minutes and {seconds} seconds\n")
+
+    ########################################
+    # I CHANGED THE PATHS - REVERT TO SUBMIT
+    ########################################
+    path_to_directory = "/home/morais/deep_learning_project"
+    # plot(epochs, train_accs, valid_accs, filename=f"{path_to_directory}/images/Q1-{opt.model}-accs")
     if opt.model == 'mlp':
-        plot_loss(epochs, train_loss, filename=f"Q1-{opt.model}-loss.pdf")
+        plot_loss(epochs, train_loss, filename=f"{path_to_directory}/images/Q1-{opt.model}-loss")
     elif opt.model == 'logistic_regression':
-        plot_w_norm(epochs, weight_norms, filename=f"Q1-{opt.model}-w_norms.pdf")
-    with open(f"Q1-{opt.model}-results.txt", "w") as f:
+        plot_w_norm(epochs, weight_norms, filename=f"{path_to_directory}/images/Q1-{opt.model}-w_norms")
+    with open(f"{path_to_directory}/results/Q1-{opt.model}-results.txt", "w") as f:
         f.write(f"Final test acc: {model.evaluate(test_X, test_y)}\n")
         f.write(f"Training time: {minutes} minutes and {seconds} seconds\n")
 
