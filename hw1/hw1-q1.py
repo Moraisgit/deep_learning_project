@@ -87,12 +87,40 @@ class LogisticRegression(LinearModel):
 class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer.
-        raise NotImplementedError # Q1.3 (a)
+        self.n_classes = n_classes
+        self.n_features = n_features
+        self.hidden_size = hidden_size
+
+        self.W1 = np.random.normal(0.1, 0.1, size=(self.hidden_size, self.n_features))
+        self.b1 = np.zeros(self.hidden_size)
+        self.W2 = np.random.normal(0.1, 0.1, size=(self.n_classes, self.hidden_size))
+        self.b2 = np.zeros(self.n_classes)
+
+        # raise NotImplementedError # Q1.3 (a)
+
+    def relu(self, x):
+        return np.maximum(0, x)
+    
+    def softmax(self, output):
+        return np.exp(output - np.max(output)) / np.sum(np.exp(output - np.max(output)))
 
     def predict(self, X):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes.
-        raise NotImplementedError # Q1.3 (a)
+        predicted_labels = []
+        for x in X:
+            # Comoute forward pass
+            h0 = x
+            z1 = self.W1.dot(h0) + self.b1
+            h1 = self.relu(z1)
+            z2 = self.W2.dot(h1) + self.b2
+            h2 = self.softmax(z2)
+            # Get the class with the highest probability
+            y_hat = np.argmax(h2)
+            predicted_labels.append(y_hat)
+
+        return np.array(predicted_labels)
+        # raise NotImplementedError # Q1.3 (a)
 
     def evaluate(self, X, y):
         """
@@ -109,7 +137,46 @@ class MLP(object):
         """
         Dont forget to return the loss of the epoch.
         """
-        raise NotImplementedError # Q1.3 (a)
+        total_loss = 0
+        one_hot = np.zeros((np.size(y, 0), self.n_classes))
+        for i in range(np.size(y, 0)):
+            one_hot[i, y[i]] = 1
+        y_train_ohe = one_hot
+
+        # For each observation and target
+        for x_i, y_i in zip(X, y_train_ohe):
+            # Comoute forward pass
+            h0 = x_i
+            z1 = self.W1.dot(h0) + self.b1
+            h1 = self.relu(z1)
+            z2 = self.W2.dot(h1) + self.b2
+            probs = self.softmax(z2)
+            
+            # Compute Loss and Update total loss
+            loss = -y_i.dot(np.log(probs + 1e-8))            
+            total_loss+=loss
+
+            # Compute backpropagation
+            grad_z2 = probs - y_i  # Grad of loss wrt p
+            # Gradient of hidden parameters.
+            grad_W2 = grad_z2[:, None].dot(h1[:, None].T)
+            grad_b2 = grad_z2
+            # Gradient of hidden layer below.
+            grad_h1 = self.W2.T.dot(grad_z2)
+            # Gradient of hidden layer below before activation.
+            grad_z1 = grad_h1 * (z1 > 0)
+            # Gradient of hidden parameters.
+            grad_W1 = grad_z1[:, None].dot(h0[:, None].T)
+            grad_b1 = grad_z1
+
+            # Gradient updates.
+            self.W1 -= learning_rate*grad_W1
+            self.b1 -= learning_rate*grad_b1
+            self.W2 -= learning_rate*grad_W2
+            self.b2 -= learning_rate*grad_b2
+
+        return total_loss
+        # raise NotImplementedError # Q1.3 (a)
 
 
 def plot(epochs, train_accs, val_accs, filename=None):
@@ -247,7 +314,7 @@ def main():
     # I CHANGED THE PATHS - REVERT TO SUBMIT
     ########################################
     path_to_directory = "/home/morais/deep_learning_project"
-    # plot(epochs, train_accs, valid_accs, filename=f"{path_to_directory}/images/Q1-{opt.model}-accs")
+    plot(epochs, train_accs, valid_accs, filename=f"{path_to_directory}/images/Q1-{opt.model}-accs")
     if opt.model == 'mlp':
         plot_loss(epochs, train_loss, filename=f"{path_to_directory}/images/Q1-{opt.model}-loss")
     elif opt.model == 'logistic_regression':
