@@ -3,12 +3,10 @@
 # Deep Learning Homework 1
 
 import argparse
-
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 from matplotlib import pyplot as plt
-
 import time
 import utils
 
@@ -17,18 +15,17 @@ class LogisticRegression(nn.Module):
 
     def __init__(self, n_classes, n_features, **kwargs):
         """
-        n_classes (int)
-        n_features (int)
+        Initialize the logistic regression model with weights and bias.
 
-        The __init__ should be used to declare what kind of layers and other
-        parameters the module has. For example, a logistic regression module
-        has a weight matrix and bias vector. For an idea of how to use
-        pytorch to make weights and biases, have a look at
-        https://pytorch.org/docs/stable/nn.html
+        Args:
+            n_classes (int): Number of output classes.
+            n_features (int): Number of input features.
         """
         super().__init__()
         # In a pytorch module, the declarations of layers needs to come after
         # the super __init__ line, otherwise the magic doesn't work.
+        # affine linear transformation to the incoming data: y=xA.T+b
+        self.linear = nn.Linear(n_features, n_classes)
 
     def forward(self, x, **kwargs):
         """
@@ -44,7 +41,8 @@ class LogisticRegression(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        raise NotImplementedError
+        
+        return self.linear(x) # returns the logits
 
 
 class FeedforwardNetwork(nn.Module):
@@ -65,7 +63,27 @@ class FeedforwardNetwork(nn.Module):
         """
         super().__init__()
         # Implement me!
-        raise NotImplementedError
+        if activation_type == 'relu':
+            activation = nn.ReLU()
+        elif activation_type == 'tanh':
+            self.activation = nn.Tanh()
+        else:
+            raise ValueError(f"Unsupported activation_type: {activation_type}")
+
+        # Network architecture
+        layer_list = []
+        input_dim = n_features
+        for _ in range(layers):
+            layer_list.append(nn.Linear(input_dim, hidden_size))
+            layer_list.append(activation)
+            layer_list.append(nn.Dropout(p=dropout))
+            input_dim = hidden_size
+
+        # Final output layer
+        layer_list.append(nn.Linear(hidden_size, n_classes))
+
+        # Combine layers into a sequential model
+        self.network = nn.Sequential(*layer_list)
 
     def forward(self, x, **kwargs):
         """
@@ -75,8 +93,7 @@ class FeedforwardNetwork(nn.Module):
         the output logits from x. This will include using various hidden
         layers, pointwise nonlinear functions, and dropout.
         """
-        raise NotImplementedError
-
+        return self.network(x)
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
     """
@@ -96,8 +113,18 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     This function should return the loss (tip: call loss.item()) to get the
     loss as a numerical value that is not part of the computation graph.
     """
-    raise NotImplementedError
 
+
+    # Forward pass
+    outputs = model(X)
+    loss = criterion(outputs, y) # Compute the loss function
+
+    # BAck propagation
+
+    optimizer.zero_grad() # Reset the gradients
+    loss.backward()
+    optimizer.step()      # Update parameters
+    return loss.item()
 
 def predict(model, X):
     """X (n_examples x n_features)"""
@@ -196,7 +223,7 @@ def main():
     )
 
     # get a loss criterion
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss() # applies softamx
 
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)
