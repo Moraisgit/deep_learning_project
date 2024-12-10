@@ -54,8 +54,6 @@ class Perceptron(LinearModel):
             self.W[y_i, :] += eta * x_i
             self.W[y_hat_i, :] -= eta * x_i
 
-        # raise NotImplementedError # Q1.1 (a)
-
 
 class LogisticRegression(LinearModel):
     def update_weight(self, x_i, y_i, learning_rate=0.001, l2_penalty=0.0, **kwargs):
@@ -81,8 +79,6 @@ class LogisticRegression(LinearModel):
         else:
             self.W = self.W + learning_rate * (y_i_one_hot - label_probabilities).dot(np.expand_dims(x_i, axis = 1).T)
 
-        # raise NotImplementedError # Q1.2 (a,b)
-
 
 class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
@@ -95,8 +91,6 @@ class MLP(object):
         self.b1 = np.zeros(self.hidden_size)
         self.W2 = np.random.normal(0.1, 0.1, size=(self.n_classes, self.hidden_size))
         self.b2 = np.zeros(self.n_classes)
-
-        # raise NotImplementedError # Q1.3 (a)
 
     def relu(self, x):
         return np.maximum(0, x)
@@ -120,7 +114,6 @@ class MLP(object):
             predicted_labels.append(y_hat)
 
         return np.array(predicted_labels)
-        # raise NotImplementedError # Q1.3 (a)
 
     def evaluate(self, X, y):
         """
@@ -175,8 +168,7 @@ class MLP(object):
             self.W2 -= learning_rate*grad_W2
             self.b2 -= learning_rate*grad_b2
 
-        return total_loss
-        # raise NotImplementedError # Q1.3 (a)
+        return total_loss/len(X)
 
 
 def plot(epochs, train_accs, val_accs, filename=None):
@@ -187,7 +179,7 @@ def plot(epochs, train_accs, val_accs, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-    plt.show()
+    plt.clf()
 
 def plot_loss(epochs, loss, filename=None):
     plt.xlabel('Epoch')
@@ -196,7 +188,7 @@ def plot_loss(epochs, loss, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-    plt.show()
+    plt.clf()
 
 
 def plot_w_norm(epochs, w_norms, filename=None):
@@ -206,7 +198,7 @@ def plot_w_norm(epochs, w_norms, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-    plt.show()
+    plt.clf()
 
 
 def main():

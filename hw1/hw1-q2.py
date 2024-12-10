@@ -280,9 +280,17 @@ def main():
         "Valid Loss": valid_losses,
     }
 
-    plot(epochs, losses, filename=f'{opt.model}-training-loss-{config}.pdf')
+    # plot(epochs, losses, filename=f'{opt.model}-training-loss-{config}.pdf')
+    # accuracy = { "Valid Accuracy": valid_accs }
+    # plot(epochs, accuracy, filename=f'{opt.model}-validation-accuracy-{config}.pdf')
+
+    ########################################
+    # I CHANGED THE PATHS - REVERT TO SUBMIT
+    ########################################
+    path_to_directory = "/home/morais/deep_learning_project"
+    plot(epochs, losses, filename=f'{path_to_directory}/images/Q2-{opt.model}-training-loss-{config}.png')
     accuracy = { "Valid Accuracy": valid_accs }
-    plot(epochs, accuracy, filename=f'{opt.model}-validation-accuracy-{config}.pdf')
+    plot(epochs, accuracy, filename=f'{path_to_directory}/images/Q2-{opt.model}-validation-accuracy-{config}.png')
 
 
 if __name__ == '__main__':
