@@ -69,9 +69,16 @@ def train(data, model, lr, n_epochs, checkpoint_name, max_len=50):
 
             optimizer.zero_grad()
             outputs, _ = model(src, src_lengths, tgt)
-            loss = criterion(
-                outputs.reshape(-1, outputs.shape[-1]), tgt[:, 1:].reshape(-1)
-            )
+            # loss = criterion(
+            #     outputs.reshape(-1, outputs.shape[-1]), tgt[:, 1:].reshape(-1)
+            # )
+            ##################################
+            # THIS WAS CHANGED TO MAKE IT WORK
+            ##################################
+            outputs = outputs[:, :-1, :].contiguous().view(-1, outputs.shape[-1])
+            tgt = tgt[:, 1:].contiguous().view(-1)
+            loss = criterion(outputs, tgt)
+
             loss.backward()
             optimizer.step()
 
@@ -231,7 +238,28 @@ def nucleus_sampling(logits, p=0.8):
     # 3. Rescale the distribution and sample from the resulting set of tokens.
     # Implementation of the steps as described above:
 
-    raise NotImplementedError("Add your implementation.")
+    # Transform the given logits into probabilities
+    probabilities = torch.softmax(logits, dim=-1)  # (vocab_size,)
+    
+    # Sort probabilities in descending order and compute cumulative probabilities
+    sorted_probs, sorted_indices = torch.sort(probabilities, descending=True)  # (vocab_size,)
+    cumulative_probs = torch.cumsum(sorted_probs, dim=-1)  # (vocab_size,)
+    
+    # Select the smallest set of tokens whose cumulative probability mass exceeds p
+    cutoff_idx = torch.where(cumulative_probs > p)[0][0]  # Find the first index where cumulative prob > p
+    top_indices = sorted_indices[:cutoff_idx + 1]  # Indices of the top-p set
+    
+    # Rescale the distribution
+    top_probs = sorted_probs[:cutoff_idx + 1]
+    rescaled_probs = top_probs / top_probs.sum()  # Normalize probabilities to sum to 1
+    
+    # Sample from the resulting set of tokens
+    sampled_idx = torch.multinomial(rescaled_probs, num_samples=1)  # Shape: (1,)
+    
+    # Map the sampled index back to the original logits' indices
+    next_token = top_indices[sampled_idx]  # Shape: (1,)
+    
+    return next_token
 
 
 def main(args):
@@ -314,8 +342,12 @@ def main(args):
         plt.xlabel("Epochs")
         plt.ylabel("Error Rate")
         plt.legend()
+        # plt.savefig(
+        #     "attn_%s_err_rate.pdf" % (str(args.use_attn),),
+        #     bbox_inches="tight",
+        # )
         plt.savefig(
-            "attn_%s_err_rate.pdf" % (str(args.use_attn),),
+            "/home/morais/deep_learning_project/images/attn_%s_err_rate.png" % (str(args.use_attn),),
             bbox_inches="tight",
         )
     else:
